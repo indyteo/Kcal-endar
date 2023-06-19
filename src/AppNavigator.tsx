@@ -1,31 +1,53 @@
-import { createMaterialBottomTabNavigator } from "@react-navigation/material-bottom-tabs";
-import { Text, View } from "react-native";
+import {
+	createMaterialBottomTabNavigator,
+	MaterialBottomTabNavigationOptions
+} from "@react-navigation/material-bottom-tabs";
+import React from "react";
+import { View } from "react-native";
+import { Text } from "react-native-paper";
+import Icon from "react-native-paper/src/components/Icon";
 
-const BottomTab = createMaterialBottomTabNavigator();
+import FoodDatabase from "./screens/FoodDatabase";
+import HealthGoals from "./screens/HealthGoals";
+
+export type BottomTabParamList = {
+	HealthGoals: undefined;
+	FoodDatabase: undefined;
+	MealPlanning: undefined;
+};
+
+const BottomTab = createMaterialBottomTabNavigator<BottomTabParamList>();
+
+function bottomTabOptions(
+	label: string,
+	unfocusedIcon: string,
+	focusedIcon: string
+): MaterialBottomTabNavigationOptions {
+	return {
+		tabBarLabel: label,
+		tabBarIcon: ({ focused, color }) => <Icon size={24} color={color} source={focused ? focusedIcon : unfocusedIcon} />
+	};
+}
 
 function AppNavigator() {
 	return (
 		<BottomTab.Navigator>
-			<BottomTab.Screen name="Health Goals" component={HealthGoals} />
-			<BottomTab.Screen name="Food Database" component={FoodDatabase} />
-			<BottomTab.Screen name="Meal Planning" component={MealPlanning} />
+			<BottomTab.Screen
+				name="HealthGoals"
+				component={HealthGoals}
+				options={bottomTabOptions("Health Goals", "account-heart-outline", "account-heart")}
+			/>
+			<BottomTab.Screen
+				name="FoodDatabase"
+				component={FoodDatabase}
+				options={bottomTabOptions("Food Database", "food-outline", "food")}
+			/>
+			<BottomTab.Screen
+				name="MealPlanning"
+				component={MealPlanning}
+				options={bottomTabOptions("Meal Planning", "calendar-outline", "calendar")}
+			/>
 		</BottomTab.Navigator>
-	);
-}
-
-function HealthGoals() {
-	return (
-		<View>
-			<Text>TODO</Text>
-		</View>
-	);
-}
-
-function FoodDatabase() {
-	return (
-		<View>
-			<Text>TODO</Text>
-		</View>
 	);
 }
 
