@@ -3,12 +3,11 @@ import {
 	MaterialBottomTabNavigationOptions
 } from "@react-navigation/material-bottom-tabs";
 import React from "react";
-import { View } from "react-native";
-import { Text } from "react-native-paper";
 import Icon from "react-native-paper/src/components/Icon";
 
 import FoodDatabase from "./screens/FoodDatabase";
 import HealthGoals from "./screens/HealthGoals";
+import MealPlanning from "./screens/MealPlanning";
 
 export type BottomTabParamList = {
 	HealthGoals: undefined;
@@ -48,14 +47,6 @@ function AppNavigator() {
 				options={bottomTabOptions("Meal Planning", "calendar-outline", "calendar")}
 			/>
 		</BottomTab.Navigator>
-	);
-}
-
-function MealPlanning() {
-	return (
-		<View>
-			<Text>TODO</Text>
-		</View>
 	);
 }
 
