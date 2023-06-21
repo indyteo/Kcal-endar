@@ -98,7 +98,7 @@ const HealthGoalsProfileScreen = ({ navigation }: StackScreenProps<HealthGoalsSt
 						color: Math.abs(diff) > 150 ? theme.colors.error : theme.colors.onBackground
 					}}
 				>
-					{dailyCaloriesAverage} kcal
+					{Math.floor(dailyCaloriesAverage)} kcal
 				</Text>
 			)}
 			{Math.abs(diff) > 150 && (
