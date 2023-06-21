@@ -38,7 +38,7 @@ const HealthGoalsProfileScreen = ({ navigation }: StackScreenProps<HealthGoalsSt
 	const age = useAge();
 	const bmr = useBMR();
 	const [dailyCaloriesAverage, setDailyCaloriesAverage] = useState<number>();
-	const diff = dailyCaloriesAverage === undefined ? 0 : dailyCaloriesAverage - bmr;
+	const diff = dailyCaloriesAverage === undefined ? 0 : Math.floor(dailyCaloriesAverage - bmr);
 
 	useEffect(() => {
 		if (planning === null) return;

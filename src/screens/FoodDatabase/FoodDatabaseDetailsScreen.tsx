@@ -93,7 +93,6 @@ export function FoodDatabaseDetailsScreen({ route }: StackScreenProps<FoodDataba
 				)}
 			</View>
 			<Divider />
-			<View style={{ height: 1000 }} />
 		</Animated.ScrollView>
 	);
 }
