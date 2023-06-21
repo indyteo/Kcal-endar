@@ -1,18 +1,24 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-const favoriteStorageNamespace = "favorites.";
-const favorites: Record<string, boolean> = {};
+import { Planning, Profile } from "../utils/types";
 
-export function updateFavoriteFood(foodId: string, favorite: boolean): Promise<void> {
-	favorites[foodId] = favorite;
-	const storageKey = favoriteStorageNamespace + foodId;
-	if (favorite) {
-		return AsyncStorage.setItem(storageKey, "");
-	} else {
-		return AsyncStorage.removeItem(storageKey);
-	}
+const profileStorageKey = "profile";
+const planningStorageKey = "planning";
+
+export function loadProfile(): Promise<Profile | null> {
+	return AsyncStorage.getItem(profileStorageKey).then(value => (value === null ? null : JSON.parse(value)));
 }
 
-export function isFavorite(foodId: string): Promise<boolean> {
-	return AsyncStorage.getItem(favoriteStorageNamespace + foodId).then(value => value !== null);
+export function saveProfile(profile: Profile | null): Promise<void> {
+	return profile === null
+		? AsyncStorage.removeItem(profileStorageKey)
+		: AsyncStorage.setItem(profileStorageKey, JSON.stringify(profile));
+}
+
+export function loadPlanning(): Promise<Planning | null> {
+	return AsyncStorage.getItem(planningStorageKey).then(value => (value === null ? null : JSON.parse(value)));
+}
+
+export function savePlanning(planning: Planning): Promise<void> {
+	return AsyncStorage.setItem(planningStorageKey, JSON.stringify(planning));
 }

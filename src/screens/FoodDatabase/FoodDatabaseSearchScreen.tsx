@@ -1,13 +1,16 @@
 import { useNavigation } from "@react-navigation/native";
 import { StackNavigationProp, StackScreenProps } from "@react-navigation/stack";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { FlatList, Image, ScrollView, TouchableOpacity, View } from "react-native";
-import { Button, Card, Chip, Divider, List, Text, useTheme } from "react-native-paper";
+import { Button, Card, Divider, List, Text, useTheme } from "react-native-paper";
 
 import { FoodDatabaseStackParamList } from "./index";
 import IconToggleButton from "../../components/IconToggleButton";
 import SearchBar from "../../components/SearchBar";
-import { foodFilters, FoodItem, FoodSearchResults, searchFood } from "../../services/FoodDatabaseAPI";
+import SelectableChips from "../../components/SelectableChips";
+import { FoodSearchResults, searchFood } from "../../services/FoodDatabaseAPI";
+import { foodFilters } from "../../utils/constants";
+import { Filter, FoodItem } from "../../utils/types";
 
 function FoodCard() {
 	const theme = useTheme();
@@ -49,53 +52,50 @@ function FoodCard() {
 }
 
 export function FoodDatabaseSearchScreen({ navigation }: StackScreenProps<FoodDatabaseStackParamList, "Search">) {
-	const theme = useTheme();
+	const [search, setSearch] = useState<string>();
+	const [searchFilters, setSearchFilters] = useState<Filter[]>([]);
 	const [searchResults, setSearchResults] = useState<FoodSearchResults | null>();
+
+	useEffect(() => {
+		if (search) {
+			searchFood(search, searchFilters)
+				.then(setSearchResults)
+				.catch(error => {
+					console.error(error);
+					setSearchResults(null);
+				});
+		} else setSearchResults(undefined);
+	}, [search, searchFilters]);
 
 	return (
 		<View style={{ flex: 1 }}>
-			<SearchBar
-				onSearch={search => {
-					searchFood(search)
-						.then(setSearchResults)
-						.catch(error => {
-							console.error(error);
-							setSearchResults(null);
-						});
-				}}
-				onClear={() => setSearchResults(undefined)}
-			>
+			<SearchBar onSearch={setSearch} onClear={() => setSearch(undefined)}>
 				<View>
-					<ScrollView
-						horizontal
-						showsHorizontalScrollIndicator={false}
-						contentContainerStyle={{
-							paddingHorizontal: 15,
-							paddingTop: 15,
-							paddingBottom: 10,
-							gap: 10
+					<SelectableChips
+						options={Object.entries(foodFilters).map(([filter, display]) => ({ value: filter as Filter, ...display }))}
+						selected={searchFilters}
+						onToggle={(filter, selected) => {
+							if (selected) setSearchFilters(searchFilters.concat(filter));
+							else setSearchFilters(searchFilters.filter(f => f !== filter));
 						}}
-					>
-						{Object.entries(foodFilters).map(([filter, display]) => (
-							<Chip key={filter} icon={display.icon} mode="outlined" style={{ backgroundColor: "transparent" }}>
-								{display.label}
-							</Chip>
-						))}
-					</ScrollView>
+						multiple
+						style={{ paddingHorizontal: 15, paddingTop: 15, paddingBottom: 10, gap: 10 }}
+						chipStyle={({ selected }) => (selected ? undefined : { backgroundColor: "transparent" })}
+					/>
 				</View>
 				{searchResults === undefined ? (
-					<Text>Type to search</Text>
+					<Text style={{ textAlign: "center", paddingTop: 50 }}>Type to search...</Text>
 				) : searchResults === null ? (
-					<Text>Error</Text>
+					<Text style={{ textAlign: "center", paddingTop: 50 }}>Error</Text>
 				) : searchResults.items.length === 0 ? (
-					<Text>No results</Text>
+					<Text style={{ textAlign: "center", paddingTop: 50 }}>No results</Text>
 				) : (
 					<FlatList
 						data={searchResults.items}
 						renderItem={({ item }) => (
 							<List.Item
 								title={item.label}
-								description="Generic food item"
+								description={item.brand ?? "Generic food item"}
 								left={props => <List.Image {...props} source={{ uri: item.image }} />}
 								right={props => (
 									<View style={{ flexDirection: "row", alignItems: "center" }}>

@@ -1,11 +1,14 @@
 import { StackScreenProps } from "@react-navigation/stack";
 import React, { useEffect, useRef, useState } from "react";
 import { Animated, ImageBackground, ScrollView, View } from "react-native";
-import { Button, Chip, Divider, Text, useTheme } from "react-native-paper";
+import { Chip, Divider, Text, useTheme } from "react-native-paper";
 import Icon from "react-native-paper/src/components/Icon";
 
+import AddToMealPlan from "./AddToMealPlan";
 import { FoodDatabaseStackParamList } from "./index";
-import { foodFilters, FoodNutrientsInfo, getFoodNutrients } from "../../services/FoodDatabaseAPI";
+import { getFoodNutrients } from "../../services/FoodDatabaseAPI";
+import { foodFilters } from "../../utils/constants";
+import { FoodNutrientsInfo } from "../../utils/types";
 
 export function FoodDatabaseDetailsScreen({ route }: StackScreenProps<FoodDatabaseStackParamList, "Details">) {
 	const theme = useTheme();
@@ -66,13 +69,7 @@ export function FoodDatabaseDetailsScreen({ route }: StackScreenProps<FoodDataba
 						})
 					)}
 				</ScrollView>
-				<Button
-					mode="contained"
-					onPress={() => console.log("Add to meal plan")}
-					style={{ alignSelf: "center", marginVertical: 25 }}
-				>
-					Add to meal plan
-				</Button>
+				<AddToMealPlan item={route.params.item} style={{ marginVertical: 25, alignSelf: "center" }} />
 				<View
 					style={{
 						flexDirection: "row",

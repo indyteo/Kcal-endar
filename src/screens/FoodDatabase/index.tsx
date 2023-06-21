@@ -4,7 +4,7 @@ import React from "react";
 import FoodDatabaseDetailsHeader from "./FoodDatabaseDetailsHeader";
 import FoodDatabaseDetailsScreen from "./FoodDatabaseDetailsScreen";
 import FoodDatabaseSearchScreen from "./FoodDatabaseSearchScreen";
-import { FoodItem } from "../../services/FoodDatabaseAPI";
+import { FoodItem } from "../../utils/types";
 
 export type FoodDatabaseStackParamList = {
 	Search: undefined;

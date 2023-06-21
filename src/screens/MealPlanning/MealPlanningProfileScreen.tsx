@@ -1,6 +1,7 @@
 import React from "react";
 import { SectionList, View } from "react-native";
 import { Divider, FAB, IconButton, List, Text, useTheme } from "react-native-paper";
+import Icon from "react-native-paper/src/components/Icon";
 
 const DATA = [
 	{
@@ -48,6 +49,20 @@ const MealPlanningProfileScreen = ({ day }: { day: string }) => {
 							<IconButton icon="plus" onPress={() => console.log("oui")} />
 						</View>
 					)}
+					ListFooterComponent={
+						<View
+							style={{
+								flexDirection: "row",
+								gap: 10,
+								alignItems: "center",
+								paddingHorizontal: 20,
+								paddingVertical: 25
+							}}
+						>
+							<Icon color={theme.colors.outline} size={24} source="archive-remove-outline" />
+							<Text style={{ flex: 1, color: theme.colors.onSurfaceVariant }}>Pro-tip: Swipe to remove items!</Text>
+						</View>
+					}
 				/>
 			</View>
 			<FAB style={{ position: "absolute", right: 15, bottom: 15 }} icon="plus" onPress={() => console.log("add it")} />

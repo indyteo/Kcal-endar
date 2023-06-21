@@ -6,11 +6,17 @@ import {
 	NavigationContainer
 } from "@react-navigation/native";
 import { StatusBar } from "expo-status-bar";
+import { useEffect } from "react";
 import { useColorScheme } from "react-native";
 import { adaptNavigationTheme, MD3DarkTheme, MD3LightTheme, PaperProvider } from "react-native-paper";
+import { en, registerTranslation } from "react-native-paper-dates";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import AppNavigator from "./src/AppNavigator";
+import Messages from "./src/components/Messages";
+import { MessagesContextProvider } from "./src/contexts/MessagesContext";
+import { PlanningContextProvider } from "./src/contexts/PlanningContext";
+import { ProfileContextProvider } from "./src/contexts/ProfileContext";
 
 const { LightTheme: NavigationLightTheme, DarkTheme: NavigationDarkTheme } = adaptNavigationTheme({
 	reactNavigationLight: RawNavigationDefaultTheme,
@@ -23,17 +29,29 @@ export default function App() {
 	const colorScheme = useColorScheme() ?? "light";
 	const isDarkMode = colorScheme === "dark";
 	const theme = isDarkMode ? MD3DarkTheme : MD3LightTheme;
+
+	useEffect(() => {
+		registerTranslation("en", en);
+	}, []);
+
 	return (
 		<PaperProvider theme={theme}>
 			<NavigationContainer theme={isDarkMode ? NavigationDarkTheme : NavigationLightTheme}>
-				<StatusBar />
 				<SafeAreaView
 					style={{
 						backgroundColor: theme.colors.background,
 						height: "100%"
 					}}
 				>
-					<AppNavigator />
+					<MessagesContextProvider>
+						<ProfileContextProvider>
+							<PlanningContextProvider>
+								<StatusBar />
+								<AppNavigator />
+								<Messages />
+							</PlanningContextProvider>
+						</ProfileContextProvider>
+					</MessagesContextProvider>
 				</SafeAreaView>
 			</NavigationContainer>
 		</PaperProvider>
