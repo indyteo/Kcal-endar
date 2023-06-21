@@ -2,19 +2,16 @@ import { useNavigation } from "@react-navigation/native";
 import { StackNavigationProp, StackScreenProps } from "@react-navigation/stack";
 import React, { useEffect, useState } from "react";
 import { FlatList, Image, ScrollView, TouchableOpacity, View } from "react-native";
-import { Card, Divider, List, Text, useTheme } from "react-native-paper";
+import { Card, Divider, Text, useTheme } from "react-native-paper";
 
-import AddToMealPlan from "./AddToMealPlan";
 import { FoodDatabaseStackParamList } from "./index";
+import AddToMealPlan from "../../components/AddToMealPlan";
 import FavoriteButton from "../../components/FavoriteButton";
-import SearchBar from "../../components/SearchBar";
-import SelectableChips from "../../components/SelectableChips";
+import FoodSearch from "../../components/FoodSearch";
 import { useFavoritesContext } from "../../contexts/FavoritesContext";
 import { usePlanningContext } from "../../contexts/PlanningContext";
 import { loadFoodItems } from "../../services/AppStorage";
-import { FoodSearchResults, searchFood } from "../../services/FoodDatabaseAPI";
-import { foodFilters } from "../../utils/constants";
-import { Filter, FoodItem } from "../../utils/types";
+import { FoodItem } from "../../utils/types";
 
 function FoodCard({ item }: { item: FoodItem }) {
 	const navigation = useNavigation<StackNavigationProp<FoodDatabaseStackParamList, "Search">>();
@@ -40,20 +37,6 @@ function FoodCard({ item }: { item: FoodItem }) {
 
 export function FoodDatabaseSearchScreen({ navigation }: StackScreenProps<FoodDatabaseStackParamList, "Search">) {
 	const theme = useTheme();
-
-	const [search, setSearch] = useState<string>();
-	const [searchFilters, setSearchFilters] = useState<Filter[]>([]);
-	const [searchResults, setSearchResults] = useState<FoodSearchResults | null>();
-	useEffect(() => {
-		if (search) {
-			searchFood(search, searchFilters)
-				.then(setSearchResults)
-				.catch(error => {
-					console.error(error);
-					setSearchResults(null);
-				});
-		} else setSearchResults(undefined);
-	}, [search, searchFilters]);
 
 	const { favorites } = useFavoritesContext();
 	const [favoriteItems, setFavoriteItems] = useState<FoodItem[]>([]);
@@ -83,49 +66,7 @@ export function FoodDatabaseSearchScreen({ navigation }: StackScreenProps<FoodDa
 
 	return (
 		<View style={{ flex: 1 }}>
-			<SearchBar onSearch={setSearch} onClear={() => setSearch(undefined)}>
-				<View>
-					<SelectableChips
-						options={Object.entries(foodFilters).map(([filter, display]) => ({ value: filter as Filter, ...display }))}
-						selected={searchFilters}
-						onToggle={(filter, selected) => {
-							if (selected) setSearchFilters(searchFilters.concat(filter));
-							else setSearchFilters(searchFilters.filter(f => f !== filter));
-						}}
-						multiple
-						style={{ paddingHorizontal: 15, paddingTop: 15, paddingBottom: 10, gap: 10 }}
-						chipStyle={({ selected }) => (selected ? undefined : { backgroundColor: "transparent" })}
-					/>
-				</View>
-				{searchResults === undefined ? (
-					<Text style={{ textAlign: "center", paddingTop: 50 }}>Type to search...</Text>
-				) : searchResults === null ? (
-					<Text style={{ textAlign: "center", paddingTop: 50 }}>Error</Text>
-				) : searchResults.items.length === 0 ? (
-					<Text style={{ textAlign: "center", paddingTop: 50 }}>No results</Text>
-				) : (
-					<FlatList
-						data={searchResults.items}
-						renderItem={({ item }) => (
-							<List.Item
-								title={item.label}
-								description={item.brand ?? "Generic food item"}
-								left={props => <List.Image {...props} source={{ uri: item.image }} />}
-								right={props => (
-									<View style={{ flexDirection: "row", alignItems: "center" }}>
-										<Text>{item.kcal} kcal</Text>
-										<List.Icon {...props} icon="menu-right" />
-									</View>
-								)}
-								onPress={() => navigation.navigate("Details", { item })}
-							/>
-						)}
-						keyExtractor={item => item.id.toString()}
-						keyboardDismissMode="on-drag"
-						style={{ flex: 1 }}
-					/>
-				)}
-			</SearchBar>
+			<FoodSearch onResultSelected={item => navigation.navigate("Details", { item })} />
 			<Divider />
 			<ScrollView contentContainerStyle={{ paddingVertical: 20 }}>
 				<Text variant="titleMedium" style={{ paddingHorizontal: 25 }}>

@@ -2,6 +2,8 @@ import React, { useEffect, useMemo, useState } from "react";
 import { SectionList, View } from "react-native";
 import { ActivityIndicator, Divider, FAB, IconButton, List, Text, useTheme } from "react-native-paper";
 
+import AddToMealPlan from "../../components/AddToMealPlan";
+import FoodSearch from "../../components/FoodSearch";
 import { isExpired, usePlanningContext } from "../../contexts/PlanningContext";
 import useBMR from "../../hooks/useBMR";
 import { loadFoodItems } from "../../services/AppStorage";
@@ -16,6 +18,8 @@ export function MealPlanningScreen({ day }: MealPlanningScreenProps) {
 	const theme = useTheme();
 	const { planning, dispatchPlanning } = usePlanningContext();
 	const [dailyPlanning, setDailyPlanning] = useState<{ meal: Meal; data: (FoodItem & PlanningFoodItem)[] }[]>();
+	const [searchingFoodFor, setSearchingFoodFor] = useState<{ day: Day; meal?: Meal }>();
+	const [addingItem, setAddingItem] = useState<FoodItem>();
 
 	const dailyCalories = useMemo(
 		() =>
@@ -59,6 +63,19 @@ export function MealPlanningScreen({ day }: MealPlanningScreenProps) {
 	}
 	return (
 		<View style={{ flex: 1, position: "relative" }}>
+			{searchingFoodFor && (
+				<FoodSearch onResultSelected={setAddingItem} onQuit={() => setSearchingFoodFor(undefined)} viewOnly />
+			)}
+			<AddToMealPlan
+				item={addingItem ?? ({} as FoodItem)}
+				defaultDay={searchingFoodFor?.day}
+				defaultMeal={searchingFoodFor?.meal}
+				controlledVisibility={addingItem !== undefined}
+				onClose={() => {
+					setAddingItem(undefined);
+					setSearchingFoodFor(undefined);
+				}}
+			/>
 			<View style={{ padding: 20, gap: 5 }}>
 				<Text variant="titleLarge" style={{ paddingBottom: 15 }}>
 					Planned caloric intake
@@ -75,11 +92,18 @@ export function MealPlanningScreen({ day }: MealPlanningScreenProps) {
 				sections={dailyPlanning}
 				keyExtractor={item => item.id}
 				renderSectionHeader={({ section: { meal } }) => (
-					<View style={{ flexDirection: "row", alignItems: "center", backgroundColor: theme.colors.background }}>
+					<View
+						style={{
+							flexDirection: "row",
+							alignItems: "center",
+							backgroundColor: theme.colors.background,
+							paddingRight: 18
+						}}
+					>
 						<Text variant="titleMedium" style={{ flex: 1, padding: 20 }}>
 							{meal}
 						</Text>
-						<IconButton icon="plus" onPress={() => console.log("oui")} />
+						<IconButton icon="plus" onPress={() => setSearchingFoodFor({ day, meal })} />
 					</View>
 				)}
 				renderItem={({ item, section: { meal } }) => (
@@ -89,7 +113,7 @@ export function MealPlanningScreen({ day }: MealPlanningScreenProps) {
 						left={props => <List.Image {...props} source={{ uri: item.image }} />}
 						right={props => (
 							<View style={{ flexDirection: "row", alignItems: "center" }}>
-								<Text>{item.kcal} kcal</Text>
+								{item.date !== undefined && <Text>Extra</Text>}
 								<IconButton
 									{...props}
 									icon="trash-can-outline"
@@ -114,7 +138,11 @@ export function MealPlanningScreen({ day }: MealPlanningScreenProps) {
 					) : null
 				}
 			/>
-			<FAB style={{ position: "absolute", right: 15, bottom: 15 }} icon="plus" onPress={() => console.log("add it")} />
+			<FAB
+				style={{ position: "absolute", right: 15, bottom: 15 }}
+				icon="plus"
+				onPress={() => setSearchingFoodFor({ day })}
+			/>
 		</View>
 	);
 }

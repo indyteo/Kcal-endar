@@ -7,12 +7,14 @@ type TextInputHandles = Pick<TextInput, "setNativeProps" | "isFocused" | "clear"
 export interface SearchBarProps extends PropsWithChildren {
 	onSearch: (search: string) => void;
 	onClear: () => void;
+	onQuit?: () => void;
+	viewOnly?: boolean;
 }
 
-export function SearchBar({ children, onSearch, onClear }: SearchBarProps) {
+export function SearchBar({ children, onSearch, onClear, onQuit, viewOnly }: SearchBarProps) {
 	const theme = useTheme();
 	const [search, setSearch] = useState("");
-	const [isSearching, setSearching] = useState(false);
+	const [isSearching, setSearching] = useState(!!viewOnly);
 	const searchBarRef = useRef<TextInputHandles>(null);
 
 	const searchDebounceRef = useRef<NodeJS.Timeout | undefined>(undefined);
@@ -95,10 +97,11 @@ export function SearchBar({ children, onSearch, onClear }: SearchBarProps) {
 							handleSearchTextChange("");
 							setSearching(false);
 							searchBarRef.current?.blur();
+							onQuit?.();
 						} else setSearching(true);
 					}}
-					traileringIcon="microphone"
-					onTraileringIconPress={() => console.log("Voice search")}
+					//traileringIcon="microphone"
+					//onTraileringIconPress={() => console.log("Voice search")}
 					onFocus={() => setSearching(true)}
 					style={{
 						paddingVertical: isSearchFocusAnimationFinished ? 7 : 0,

@@ -1,4 +1,4 @@
-import { StackHeaderProps } from "@react-navigation/stack";
+import { MaterialTopTabBarProps } from "@react-navigation/material-top-tabs";
 import React from "react";
 import { Appbar } from "react-native-paper";
 
@@ -6,8 +6,8 @@ import { days } from "../../utils/constants";
 import { getCurrentDay } from "../../utils/functions";
 import { Day } from "../../utils/types";
 
-export function MealPlanningHeader({ navigation, route }: StackHeaderProps) {
-	const day = route.name as Day;
+export function MealPlanningHeader({ navigation, state }: MaterialTopTabBarProps) {
+	const day = state.routes[state.index].name as Day;
 	const dayIndex = days.indexOf(day);
 	const isToday = day === getCurrentDay();
 	return (

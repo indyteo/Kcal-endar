@@ -1,4 +1,4 @@
-import { createStackNavigator } from "@react-navigation/stack";
+import { createMaterialTopTabNavigator } from "@react-navigation/material-top-tabs";
 import React from "react";
 
 import { MealPlanningHeader } from "./MealPlanningHeader";
@@ -7,18 +7,19 @@ import { days } from "../../utils/constants";
 import { getCurrentDay } from "../../utils/functions";
 import { Day } from "../../utils/types";
 
-export type MealPlanningStackParamList = Record<Day, undefined>;
-const MealPlanningStack = createStackNavigator<MealPlanningStackParamList>();
+export type MealPlanningTabParamList = Record<Day, undefined>;
+const MealPlanningTab = createMaterialTopTabNavigator<MealPlanningTabParamList>();
 
 export function MealPlanning() {
+	const currentDay = getCurrentDay();
 	return (
-		<MealPlanningStack.Navigator initialRouteName={getCurrentDay()}>
+		<MealPlanningTab.Navigator initialRouteName={currentDay} tabBar={props => <MealPlanningHeader {...props} />}>
 			{days.map(day => (
-				<MealPlanningStack.Screen key={day} name={day} options={{ header: MealPlanningHeader }}>
+				<MealPlanningTab.Screen key={day} name={day}>
 					{() => <MealPlanningScreen day={day} />}
-				</MealPlanningStack.Screen>
+				</MealPlanningTab.Screen>
 			))}
-		</MealPlanningStack.Navigator>
+		</MealPlanningTab.Navigator>
 	);
 }
 

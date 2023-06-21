@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Image, Modal as RNModal, ScrollView, View, ViewStyle } from "react-native";
 import {
 	Appbar,
@@ -13,26 +13,47 @@ import {
 	useTheme
 } from "react-native-paper";
 
-import SelectableChips from "../../components/SelectableChips";
-import { usePlanningContext } from "../../contexts/PlanningContext";
-import { useAnimatedSlide } from "../../hooks/useAnimatedSlide";
-import { days as allDays, mealIcons, meals as allMeals } from "../../utils/constants";
-import { Day, FoodItem, Meal } from "../../utils/types";
+import SelectableChips from "./SelectableChips";
+import { usePlanningContext } from "../contexts/PlanningContext";
+import { useAnimatedSlide } from "../hooks/useAnimatedSlide";
+import { days as allDays, mealIcons, meals as allMeals } from "../utils/constants";
+import { Day, FoodItem, Meal } from "../utils/types";
 
 export interface AddToMealPlanProps {
 	item: FoodItem;
+	defaultDay?: Day;
+	defaultMeal?: Meal;
+	controlledVisibility?: boolean;
+	onClose?: () => void;
 	style?: ViewStyle;
 }
 
-export function AddToMealPlan({ item, style }: AddToMealPlanProps) {
+export function AddToMealPlan({
+	item,
+	defaultDay,
+	defaultMeal,
+	controlledVisibility,
+	onClose,
+	style
+}: AddToMealPlanProps) {
 	const theme = useTheme();
 	const { dispatchPlanning } = usePlanningContext();
-	const [visible, setVisible] = useState(false);
+	const [visible, _setVisible] = useState(!!controlledVisibility);
 	const [confirmCancel, setConfirmCancel] = useState(false);
+	const setVisible = controlledVisibility === undefined ? _setVisible : () => onClose?.();
+	useEffect(() => {
+		if (controlledVisibility !== undefined) {
+			_setVisible(controlledVisibility);
+			setQuantity(1);
+			setDays(defaultDay ? [defaultDay] : []);
+			setMeals(defaultMeal ? [defaultMeal] : []);
+			setExtra(false);
+		}
+	}, [controlledVisibility]);
 
 	const [quantity, setQuantity] = useState(1);
-	const [days, setDays] = useState<Day[]>([]);
-	const [meals, setMeals] = useState<Meal[]>([]);
+	const [days, setDays] = useState<Day[]>(defaultDay ? [defaultDay] : []);
+	const [meals, setMeals] = useState<Meal[]>(defaultMeal ? [defaultMeal] : []);
 	const [extra, setExtra] = useState(false);
 
 	const animatedSlide = useAnimatedSlide("bottom", visible);
@@ -46,9 +67,11 @@ export function AddToMealPlan({ item, style }: AddToMealPlanProps) {
 
 	return (
 		<>
-			<Button mode="contained" onPress={() => setVisible(true)} style={style}>
-				Add to meal plan
-			</Button>
+			{controlledVisibility === undefined && (
+				<Button mode="contained" onPress={() => setVisible(true)} style={style}>
+					Add to meal plan
+				</Button>
+			)}
 			<Portal>
 				<Modal
 					visible={animatedSlide.visible}

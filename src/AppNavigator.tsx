@@ -5,6 +5,7 @@ import {
 import React from "react";
 import Icon from "react-native-paper/src/components/Icon";
 
+import { useProfileContext } from "./contexts/ProfileContext";
 import FoodDatabase from "./screens/FoodDatabase";
 import HealthGoals from "./screens/HealthGoals";
 import MealPlanning from "./screens/MealPlanning";
@@ -29,8 +30,9 @@ function bottomTabOptions(
 }
 
 function AppNavigator() {
+	const { profile } = useProfileContext();
 	return (
-		<BottomTab.Navigator>
+		<BottomTab.Navigator initialRouteName={profile === null ? "HealthGoals" : "MealPlanning"}>
 			<BottomTab.Screen
 				name="HealthGoals"
 				component={HealthGoals}

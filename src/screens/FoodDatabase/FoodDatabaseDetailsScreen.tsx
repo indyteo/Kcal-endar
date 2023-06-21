@@ -4,8 +4,8 @@ import { Animated, ImageBackground, ScrollView, View } from "react-native";
 import { Chip, Divider, Text, useTheme } from "react-native-paper";
 import Icon from "react-native-paper/src/components/Icon";
 
-import AddToMealPlan from "./AddToMealPlan";
 import { FoodDatabaseStackParamList } from "./index";
+import AddToMealPlan from "../../components/AddToMealPlan";
 import { useFavoritesContext } from "../../contexts/FavoritesContext";
 import { getFoodNutrients } from "../../services/FoodDatabaseAPI";
 import { foodFilters } from "../../utils/constants";

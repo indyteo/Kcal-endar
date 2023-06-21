@@ -1,13 +1,15 @@
 import { StackScreenProps } from "@react-navigation/stack";
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { ScrollView, View } from "react-native";
-import { Chip, Text, useTheme } from "react-native-paper";
+import { ActivityIndicator, Chip, Text, useTheme } from "react-native-paper";
 import Icon from "react-native-paper/src/components/Icon";
 
 import { HealthGoalsStackParamList } from "./index";
+import { isExpired, usePlanningContext } from "../../contexts/PlanningContext";
 import { useProfileContext } from "../../contexts/ProfileContext";
 import useAge from "../../hooks/useAge";
 import useBMR from "../../hooks/useBMR";
+import { loadFoodItems } from "../../services/AppStorage";
 import { ActivityLevel, Gender, HealthGoal } from "../../utils/types";
 
 const genders: Record<Gender, string> = {
@@ -32,8 +34,25 @@ const healthGoals: Record<HealthGoal, string> = {
 const HealthGoalsProfileScreen = ({ navigation }: StackScreenProps<HealthGoalsStackParamList, "Profile">) => {
 	const theme = useTheme();
 	const { profile } = useProfileContext();
+	const { planning } = usePlanningContext();
 	const age = useAge();
 	const bmr = useBMR();
+	const [dailyCaloriesAverage, setDailyCaloriesAverage] = useState<number>();
+	const diff = dailyCaloriesAverage === undefined ? 0 : dailyCaloriesAverage - bmr;
+
+	useEffect(() => {
+		if (planning === null) return;
+		loadFoodItems(
+			Object.values(planning)
+				.flatMap(Object.values)
+				.flat()
+				.filter(item => !isExpired(item.date))
+				.map(item => item.id)
+		)
+			.then(Object.values)
+			.then(items => items.reduce((total, item) => total + (item?.kcal ?? 0), 0) / 7)
+			.then(setDailyCaloriesAverage);
+	}, [planning]);
 
 	useEffect(() => {
 		if (profile === null) navigation.navigate("Edit");
@@ -67,16 +86,31 @@ const HealthGoalsProfileScreen = ({ navigation }: StackScreenProps<HealthGoalsSt
 				{bmr} kcal
 			</Text>
 			<Text variant="titleMedium">Currently planned intake (daily average)</Text>
-			<Text variant="displayLarge" style={{ textAlign: "center", color: theme.colors.error }}>
-				XXXX kcal
-			</Text>
-			<View style={{ flexDirection: "row", gap: 10, alignItems: "flex-start" }}>
-				<Icon color={theme.colors.outline} size={36} source="alert-circle-outline" />
-				<Text style={{ flex: 1, color: theme.colors.onSurfaceVariant }}>
-					Your currently planned caloric intake does not match your target! You are XXX kcal over your goal. You should
-					consider reviewing your current planning to remove some food.
+			{dailyCaloriesAverage === undefined ? (
+				<View style={{ justifyContent: "center" }}>
+					<ActivityIndicator />
+				</View>
+			) : (
+				<Text
+					variant="displayLarge"
+					style={{
+						textAlign: "center",
+						color: Math.abs(diff) > 150 ? theme.colors.error : theme.colors.onBackground
+					}}
+				>
+					{dailyCaloriesAverage} kcal
 				</Text>
-			</View>
+			)}
+			{Math.abs(diff) > 150 && (
+				<View style={{ flexDirection: "row", gap: 10, alignItems: "flex-start" }}>
+					<Icon color={theme.colors.outline} size={36} source="alert-circle-outline" />
+					<Text style={{ flex: 1, color: theme.colors.onSurfaceVariant }}>
+						Your currently planned caloric intake does not match your target! You are {Math.abs(diff)} kcal{" "}
+						{diff < 0 ? "under" : "over"} your goal. You should consider reviewing your current planning to{" "}
+						{diff < 0 ? "add" : "remove"} some food.
+					</Text>
+				</View>
+			)}
 		</ScrollView>
 	);
 };
