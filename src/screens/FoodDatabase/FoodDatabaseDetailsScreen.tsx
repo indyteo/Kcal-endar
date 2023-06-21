@@ -6,22 +6,26 @@ import Icon from "react-native-paper/src/components/Icon";
 
 import AddToMealPlan from "./AddToMealPlan";
 import { FoodDatabaseStackParamList } from "./index";
+import { useFavoritesContext } from "../../contexts/FavoritesContext";
 import { getFoodNutrients } from "../../services/FoodDatabaseAPI";
 import { foodFilters } from "../../utils/constants";
 import { FoodNutrientsInfo } from "../../utils/types";
 
 export function FoodDatabaseDetailsScreen({ route }: StackScreenProps<FoodDatabaseStackParamList, "Details">) {
 	const theme = useTheme();
+	const { favorites } = useFavoritesContext();
 	const [foodHealth, setFoodHealth] = useState<FoodNutrientsInfo | null>();
 
+	const item = route.params.item;
+
 	useEffect(() => {
-		getFoodNutrients(route.params.item.id, route.params.item.weight)
+		getFoodNutrients(item.id, item.weight)
 			.then(setFoodHealth)
 			.catch(error => {
 				console.error(error);
 				setFoodHealth(null);
 			});
-	}, [route.params.item]);
+	}, [item]);
 
 	const scrolling = useRef(new Animated.Value(0)).current;
 	const imageOffset = scrolling.interpolate({
@@ -35,14 +39,14 @@ export function FoodDatabaseDetailsScreen({ route }: StackScreenProps<FoodDataba
 			onScroll={Animated.event([{ nativeEvent: { contentOffset: { y: scrolling } } }], { useNativeDriver: true })}
 		>
 			<Animated.View style={{ height: 350, transform: [{ translateY: imageOffset }] }}>
-				<ImageBackground source={{ uri: route.params.item.image }} resizeMode="cover" style={{ flex: 1 }} />
+				<ImageBackground source={{ uri: item.image }} resizeMode="cover" style={{ flex: 1 }} />
 			</Animated.View>
 			<View style={{ backgroundColor: theme.colors.background }}>
 				<Text variant="headlineLarge" style={{ textAlign: "center", marginTop: 30, marginBottom: 10 }}>
-					{route.params.item.kcal} kcal per unit ({route.params.item.weight}g)
+					{item.kcal} kcal per unit ({item.weight}g)
 				</Text>
 				<Text variant="headlineSmall" style={{ textAlign: "center", color: theme.colors.onSurfaceVariant }}>
-					{route.params.item.brand ?? "Generic food item"}
+					{item.brand ?? "Generic food item"}
 				</Text>
 				<ScrollView
 					horizontal
@@ -69,22 +73,24 @@ export function FoodDatabaseDetailsScreen({ route }: StackScreenProps<FoodDataba
 						})
 					)}
 				</ScrollView>
-				<AddToMealPlan item={route.params.item} style={{ marginVertical: 25, alignSelf: "center" }} />
-				<View
-					style={{
-						flexDirection: "row",
-						gap: 10,
-						paddingHorizontal: 25,
-						paddingTop: 10,
-						paddingBottom: 30,
-						alignItems: "center"
-					}}
-				>
-					<Icon color={theme.colors.outline} size={36} source="star-outline" />
-					<Text variant="bodyLarge" style={{ flex: 1, color: theme.colors.onSurfaceVariant }}>
-						Info: This food is one of your favorite and is listed on the food database main page!
-					</Text>
-				</View>
+				<AddToMealPlan item={item} style={{ marginVertical: 25, alignSelf: "center" }} />
+				{favorites.includes(item.id) && (
+					<View
+						style={{
+							flexDirection: "row",
+							gap: 10,
+							paddingHorizontal: 25,
+							paddingTop: 10,
+							paddingBottom: 30,
+							alignItems: "center"
+						}}
+					>
+						<Icon color={theme.colors.outline} size={36} source="star-outline" />
+						<Text variant="bodyLarge" style={{ flex: 1, color: theme.colors.onSurfaceVariant }}>
+							Info: This food is one of your favorite and is listed on the food database main page!
+						</Text>
+					</View>
+				)}
 			</View>
 			<Divider />
 			<View style={{ height: 1000 }} />

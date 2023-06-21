@@ -2,60 +2,48 @@ import { useNavigation } from "@react-navigation/native";
 import { StackNavigationProp, StackScreenProps } from "@react-navigation/stack";
 import React, { useEffect, useState } from "react";
 import { FlatList, Image, ScrollView, TouchableOpacity, View } from "react-native";
-import { Button, Card, Divider, List, Text, useTheme } from "react-native-paper";
+import { Card, Divider, List, Text, useTheme } from "react-native-paper";
 
+import AddToMealPlan from "./AddToMealPlan";
 import { FoodDatabaseStackParamList } from "./index";
-import IconToggleButton from "../../components/IconToggleButton";
+import FavoriteButton from "../../components/FavoriteButton";
 import SearchBar from "../../components/SearchBar";
 import SelectableChips from "../../components/SelectableChips";
+import { useFavoritesContext } from "../../contexts/FavoritesContext";
+import { usePlanningContext } from "../../contexts/PlanningContext";
+import { loadFoodItems } from "../../services/AppStorage";
 import { FoodSearchResults, searchFood } from "../../services/FoodDatabaseAPI";
 import { foodFilters } from "../../utils/constants";
 import { Filter, FoodItem } from "../../utils/types";
 
-function FoodCard() {
-	const theme = useTheme();
+function FoodCard({ item }: { item: FoodItem }) {
 	const navigation = useNavigation<StackNavigationProp<FoodDatabaseStackParamList, "Search">>();
-	const [favorite, setFavorite] = useState(false);
 	return (
 		<Card style={{ width: 350, margin: 15 }}>
-			<TouchableOpacity onPress={() => navigation.navigate("Details", { item: {} as FoodItem })} activeOpacity={0.75}>
-				<Card.Cover source={{ uri: "invalid.png" }} />
+			<TouchableOpacity onPress={() => navigation.navigate("Details", { item })} activeOpacity={0.75}>
+				<Card.Cover source={{ uri: item.image }} />
 			</TouchableOpacity>
 			<Card.Title
-				title="Banana"
-				subtitle="267 kcal"
-				right={props => (
-					<IconToggleButton
-						{...props}
-						toggled={favorite}
-						onToggle={setFavorite}
-						iconOn="star"
-						iconOff="star-outline"
-						iconColorOn={theme.colors.primary}
-						iconColorOff={theme.colors.onSurfaceVariant}
-					/>
-				)}
+				title={item.label}
+				subtitle={`${item.kcal} kcal per ${item.weight}g`}
+				right={() => <FavoriteButton item={item} />}
 			/>
 			<Card.Content style={{ paddingVertical: 15 }}>
-				<Text>
-					Lorem ipsum dolor sit amet, consectetur adipisicing elit. Ab aut fugiat illum labore nemo, non quisquam unde?
-					Cum exercitationem fugit hic iste maxime modi obcaecati porro, quibusdam ratione repudiandae voluptatum.
-				</Text>
+				<Text>{item.brand ?? "Generic food item"}</Text>
 			</Card.Content>
 			<Card.Actions style={{ padding: 16 }}>
-				<Button onPress={() => console.log("Add to meal plan")} mode="contained">
-					Add to meal plan
-				</Button>
+				<AddToMealPlan item={item} />
 			</Card.Actions>
 		</Card>
 	);
 }
 
 export function FoodDatabaseSearchScreen({ navigation }: StackScreenProps<FoodDatabaseStackParamList, "Search">) {
+	const theme = useTheme();
+
 	const [search, setSearch] = useState<string>();
 	const [searchFilters, setSearchFilters] = useState<Filter[]>([]);
 	const [searchResults, setSearchResults] = useState<FoodSearchResults | null>();
-
 	useEffect(() => {
 		if (search) {
 			searchFood(search, searchFilters)
@@ -66,6 +54,32 @@ export function FoodDatabaseSearchScreen({ navigation }: StackScreenProps<FoodDa
 				});
 		} else setSearchResults(undefined);
 	}, [search, searchFilters]);
+
+	const { favorites } = useFavoritesContext();
+	const [favoriteItems, setFavoriteItems] = useState<FoodItem[]>([]);
+	useEffect(() => {
+		loadFoodItems(favorites)
+			.then(Object.values)
+			.then(fav => fav.filter(f => f !== null))
+			.then(setFavoriteItems)
+			.catch(console.error);
+	}, [favorites]);
+
+	const { planning } = usePlanningContext();
+	const [planningItems, setPlanningItems] = useState<FoodItem[]>([]);
+	useEffect(() => {
+		if (planning === null) return;
+		loadFoodItems(
+			Object.values(planning)
+				.flatMap(Object.values)
+				.flat()
+				.map(item => item.id)
+		)
+			.then(Object.values)
+			.then(items => items.filter(f => f !== null))
+			.then(setPlanningItems)
+			.catch(console.error);
+	}, [planning]);
 
 	return (
 		<View style={{ flex: 1 }}>
@@ -117,42 +131,59 @@ export function FoodDatabaseSearchScreen({ navigation }: StackScreenProps<FoodDa
 				<Text variant="titleMedium" style={{ paddingHorizontal: 25 }}>
 					Favorite items
 				</Text>
-				<ScrollView
+				<FlatList
+					data={favoriteItems}
+					renderItem={props => <FoodCard {...props} />}
+					keyExtractor={item => item.id}
 					horizontal
 					showsHorizontalScrollIndicator={false}
-					contentContainerStyle={{ flexDirection: "row", paddingVertical: 10, paddingHorizontal: 10 }}
-				>
-					<FoodCard />
-					<FoodCard />
-					<FoodCard />
-					<FoodCard />
-				</ScrollView>
-				<Text variant="titleMedium" style={{ paddingHorizontal: 25 }}>
-					Recently searched items
-				</Text>
-				<ScrollView
-					horizontal
-					showsHorizontalScrollIndicator={false}
-					contentContainerStyle={{ flexDirection: "row", paddingVertical: 10, paddingHorizontal: 10 }}
-				>
-					<FoodCard />
-					<FoodCard />
-					<FoodCard />
-					<FoodCard />
-				</ScrollView>
+					contentContainerStyle={{ flexDirection: "row", paddingVertical: 10, paddingHorizontal: 10, minWidth: "100%" }}
+					ListEmptyComponent={
+						<Text
+							style={{ textAlign: "center", color: theme.colors.onSurfaceVariant, paddingVertical: 20, width: "100%" }}
+						>
+							Add items to favorites using the star icon
+						</Text>
+					}
+				/>
+
+				{/*<Text variant="titleMedium" style={{ paddingHorizontal: 25 }}>*/}
+				{/*	Recently searched items*/}
+				{/*</Text>*/}
+				{/*<FlatList*/}
+				{/*	data={recentSearchItems}*/}
+				{/*	renderItem={props => <FoodCard {...props} />}*/}
+				{/*	keyExtractor={item => item.id}*/}
+				{/*	horizontal*/}
+				{/*	showsHorizontalScrollIndicator={false}*/}
+				{/*	contentContainerStyle={{ flexDirection: "row", paddingVertical: 10, paddingHorizontal: 10, minWidth: "100%" }}*/}
+				{/*	ListEmptyComponent={*/}
+				{/*		<Text*/}
+				{/*			style={{ textAlign: "center", color: theme.colors.onSurfaceVariant, paddingVertical: 20, width: "100%" }}*/}
+				{/*		>*/}
+				{/*			Find items added to your meal plan here*/}
+				{/*		</Text>*/}
+				{/*	}*/}
+				{/*/>*/}
+
 				<Text variant="titleMedium" style={{ paddingHorizontal: 25 }}>
 					Items in your meal plan
 				</Text>
-				<ScrollView
+				<FlatList
+					data={planningItems}
+					renderItem={props => <FoodCard {...props} />}
+					keyExtractor={item => item.id}
 					horizontal
 					showsHorizontalScrollIndicator={false}
-					contentContainerStyle={{ flexDirection: "row", paddingVertical: 10, paddingHorizontal: 10 }}
-				>
-					<FoodCard />
-					<FoodCard />
-					<FoodCard />
-					<FoodCard />
-				</ScrollView>
+					contentContainerStyle={{ flexDirection: "row", paddingVertical: 10, paddingHorizontal: 10, minWidth: "100%" }}
+					ListEmptyComponent={
+						<Text
+							style={{ textAlign: "center", color: theme.colors.onSurfaceVariant, paddingVertical: 20, width: "100%" }}
+						>
+							Find items added to your meal plan here
+						</Text>
+					}
+				/>
 				<View style={{ alignItems: "center", padding: 25 }}>
 					<Image source={require("../../../assets/edamam-attribution.png")} style={{ width: 300, height: 60 }} />
 				</View>

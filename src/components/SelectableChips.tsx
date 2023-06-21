@@ -1,5 +1,5 @@
 import React from "react";
-import { ScrollView, View, ViewStyle } from "react-native";
+import { ScrollView, ViewStyle } from "react-native";
 import { Chip } from "react-native-paper";
 import { IconSource } from "react-native-paper/src/components/Icon";
 

@@ -19,6 +19,7 @@ export const useProfileContext = () => useContext(ProfileContext);
 export function ProfileContextProvider({ children }: PropsWithChildren) {
 	const { dispatchMessage } = useMessagesContext();
 	const [profile, setProfile] = useState<Profile | null>();
+
 	const updateProfile = useCallback((profile: Profile | null) => {
 		setProfile(profile);
 		dispatchMessage({ type: "save_begin" });
@@ -29,6 +30,7 @@ export function ProfileContextProvider({ children }: PropsWithChildren) {
 				dispatchMessage({ type: "save_end", message: "Unable to update profile!" });
 			});
 	}, []);
+
 	useEffect(() => {
 		loadProfile()
 			.then(setProfile)
@@ -38,6 +40,7 @@ export function ProfileContextProvider({ children }: PropsWithChildren) {
 				setProfile(null);
 			});
 	}, []);
+
 	const context = useMemo(() => ({ profile, updateProfile }), [profile]);
 	if (profile === undefined) {
 		return (

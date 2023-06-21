@@ -1,75 +1,122 @@
-import React from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { SectionList, View } from "react-native";
-import { Divider, FAB, IconButton, List, Text, useTheme } from "react-native-paper";
-import Icon from "react-native-paper/src/components/Icon";
+import { ActivityIndicator, Divider, FAB, IconButton, List, Text, useTheme } from "react-native-paper";
 
-const DATA = [
-	{
-		title: "Breakfast",
-		data: ["Pizza", "Burger", "Risotto"]
-	},
-	{
-		title: "Lunch",
-		data: ["French Fries", "Onion Rings", "Fried Shrimps"]
-	},
-	{
-		title: "Snacks",
-		data: ["Water", "Coke", "Beer"]
-	},
-	{
-		title: "Dinner",
-		data: ["Cheese Cake", "Ice Cream"]
-	}
-];
+import { isExpired, usePlanningContext } from "../../contexts/PlanningContext";
+import useBMR from "../../hooks/useBMR";
+import { loadFoodItems } from "../../services/AppStorage";
+import { meals } from "../../utils/constants";
+import { Day, FoodItem, Meal, PlanningFoodItem } from "../../utils/types";
 
-const MealPlanningScreen = ({ day }: { day: string }) => {
+export interface MealPlanningScreenProps {
+	day: Day;
+}
+
+export function MealPlanningScreen({ day }: MealPlanningScreenProps) {
 	const theme = useTheme();
+	const { planning, dispatchPlanning } = usePlanningContext();
+	const [dailyPlanning, setDailyPlanning] = useState<{ meal: Meal; data: (FoodItem & PlanningFoodItem)[] }[]>();
+
+	const dailyCalories = useMemo(
+		() =>
+			dailyPlanning?.reduce(
+				(total, meal) => total + meal.data.reduce((subTotal, food) => subTotal + food.kcal * food.quantity, 0),
+				0
+			) ?? 0,
+		[dailyPlanning]
+	);
+	const targetBMR = useBMR();
+
+	useEffect(() => {
+		if (planning === null) return;
+		const planningOfDay = planning[day];
+		loadFoodItems(
+			Object.values(planningOfDay)
+				.flat()
+				.filter(item => !isExpired(item.date))
+				.map(item => item.id)
+		).then(foodItems =>
+			setDailyPlanning(
+				meals.map(meal => ({
+					meal,
+					data: planningOfDay[meal]
+						.map(item => {
+							const foodItem = foodItems[item.id];
+							return foodItem === null ? null : { ...item, ...foodItem };
+						})
+						.filter((item): item is FoodItem & PlanningFoodItem => item !== null)
+				}))
+			)
+		);
+	}, [planning]);
+
+	if (dailyPlanning === undefined) {
+		return (
+			<View style={{ justifyContent: "center", alignItems: "center", flex: 1 }}>
+				<ActivityIndicator size="large" />
+			</View>
+		);
+	}
 	return (
 		<View style={{ flex: 1, position: "relative" }}>
-			<View style={{ padding: 20, bottom: 10, gap: 5 }}>
-				<Text variant="titleLarge">Planned caloric intake</Text>
+			<View style={{ padding: 20, gap: 5 }}>
+				<Text variant="titleLarge" style={{ paddingBottom: 15 }}>
+					Planned caloric intake
+				</Text>
 				<Text variant="displayMedium" style={{ color: theme.colors.primary, textAlign: "center" }}>
-					XXXX kcal
+					{dailyCalories} kcal
 				</Text>
 				<Text variant="titleLarge" style={{ color: theme.colors.onSurfaceVariant, textAlign: "center" }}>
-					Daily target: XXXX kcal
+					Daily target: {targetBMR} kcal
 				</Text>
 			</View>
 			<Divider />
-			<View style={{ flex: 1, top: 10 }}>
-				<SectionList
-					sections={DATA}
-					keyExtractor={(item, index) => item + index}
-					renderItem={({ item }) => (
-						<List.Item right={props => <List.Icon {...props} icon="menu-right" />} title={item} />
-					)}
-					renderSectionHeader={({ section: { title } }) => (
-						<View style={{ flexDirection: "row" }}>
-							<Text variant="titleMedium" style={{ flex: 1, top: 10, left: 5 }}>
-								{title}
-							</Text>
-							<IconButton icon="plus" onPress={() => console.log("oui")} />
-						</View>
-					)}
-					ListFooterComponent={
-						<View
+			<SectionList
+				sections={dailyPlanning}
+				keyExtractor={item => item.id}
+				renderSectionHeader={({ section: { meal } }) => (
+					<View style={{ flexDirection: "row", alignItems: "center", backgroundColor: theme.colors.background }}>
+						<Text variant="titleMedium" style={{ flex: 1, padding: 20 }}>
+							{meal}
+						</Text>
+						<IconButton icon="plus" onPress={() => console.log("oui")} />
+					</View>
+				)}
+				renderItem={({ item, section: { meal } }) => (
+					<List.Item
+						title={item.label}
+						description={`x${item.quantity} • ${item.kcal * item.quantity} kcal`}
+						left={props => <List.Image {...props} source={{ uri: item.image }} />}
+						right={props => (
+							<View style={{ flexDirection: "row", alignItems: "center" }}>
+								<Text>{item.kcal} kcal</Text>
+								<IconButton
+									{...props}
+									icon="trash-can-outline"
+									onPress={() => dispatchPlanning({ type: "remove_food", foodId: item.id, day, meal })}
+								/>
+							</View>
+						)}
+					/>
+				)}
+				renderSectionFooter={({ section: { data } }) =>
+					data.length === 0 ? (
+						<Text
 							style={{
-								flexDirection: "row",
-								gap: 10,
-								alignItems: "center",
-								paddingHorizontal: 20,
-								paddingVertical: 25
+								textAlign: "center",
+								color: theme.colors.onSurfaceVariant,
+								paddingVertical: 20,
+								width: "100%"
 							}}
 						>
-							<Icon color={theme.colors.outline} size={24} source="archive-remove-outline" />
-							<Text style={{ flex: 1, color: theme.colors.onSurfaceVariant }}>Pro-tip: Swipe to remove items!</Text>
-						</View>
-					}
-				/>
-			</View>
+							Nothing planned for this meal
+						</Text>
+					) : null
+				}
+			/>
 			<FAB style={{ position: "absolute", right: 15, bottom: 15 }} icon="plus" onPress={() => console.log("add it")} />
 		</View>
 	);
-};
+}
 
 export default MealPlanningScreen;

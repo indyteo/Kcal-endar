@@ -3,6 +3,12 @@ import { Day, Filter, FilterDisplay, Meal } from "./types";
 export const days: Day[] = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
 export const meals: Meal[] = ["Breakfast", "Lunch", "Snack", "Dinner"];
+export const mealIcons: Record<Meal, string> = {
+	Breakfast: "food-croissant",
+	Lunch: "food-outline",
+	Snack: "cookie-outline",
+	Dinner: "pot-steam-outline"
+};
 
 export const foodFilters: Record<Filter, FilterDisplay> = {
 	"alcohol-free": { label: "Alcohol-free", icon: "glass-cocktail-off" },

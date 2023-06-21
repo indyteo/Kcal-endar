@@ -64,5 +64,6 @@ export type Meal = "Breakfast" | "Lunch" | "Snack" | "Dinner";
 export interface PlanningFoodItem {
 	id: string;
 	date?: number;
+	quantity: number;
 }
 export type Planning = Record<Day, Record<Meal, PlanningFoodItem[]>>;

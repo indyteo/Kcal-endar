@@ -1,10 +1,19 @@
-import React, { createContext, PropsWithChildren, useContext, useEffect, useMemo, useReducer } from "react";
+import React, {
+	createContext,
+	PropsWithChildren,
+	useCallback,
+	useContext,
+	useEffect,
+	useMemo,
+	useReducer,
+	useState
+} from "react";
 
 import { useMessagesContext } from "./MessagesContext";
-import { loadPlanning, savePlanning } from "../services/AppStorage";
+import { loadPlanning, saveFoodItem, savePlanning } from "../services/AppStorage";
 import { days, meals } from "../utils/constants";
 import { getDayIndex, noop } from "../utils/functions";
-import { Day, Meal, Planning } from "../utils/types";
+import { Day, FoodItem, Meal, Planning } from "../utils/types";
 
 export type PlanningAction =
 	| {
@@ -13,7 +22,8 @@ export type PlanningAction =
 	  }
 	| {
 			type: "add_food";
-			foodId: string;
+			food: FoodItem;
+			quantity: number;
 			days: Day[];
 			meals: Meal[];
 			extra: boolean;
@@ -39,11 +49,13 @@ function planningReducer(state: Planning | null, action: PlanningAction): Planni
 				state[day] = { ...state[day] };
 				for (const meal of action.meals) {
 					state[day][meal] = state[day][meal].concat({
-						id: action.foodId,
-						date: action.extra ? Date.now() : undefined
+						id: action.food.id,
+						date: action.extra ? Date.now() : undefined,
+						quantity: action.quantity
 					});
 				}
 			}
+			saveFoodItem(action.food).catch(console.error);
 			break;
 		case "remove_food":
 			state = {
@@ -81,22 +93,35 @@ export const usePlanningContext = () => useContext(PlanningContext);
 export function PlanningContextProvider({ children }: PropsWithChildren) {
 	const { dispatchMessage } = useMessagesContext();
 	const [planning, dispatchPlanningWithoutSaving] = useReducer(planningReducer, null);
-	const dispatchPlanning = (action: PlanningAction) => {
-		if (planning === null && action.type !== "planning_loaded") {
-			dispatchMessage({ type: "send_message", message: "Planning not loaded yet..." });
-			return;
+	const [shouldSavePlanning, setShouldSavePlanning] = useState(false);
+
+	const dispatchPlanning = useCallback(
+		(action: PlanningAction) => {
+			if (planning === null && action.type !== "planning_loaded") {
+				dispatchMessage({ type: "send_message", message: "Planning not loaded yet..." });
+				return;
+			}
+			dispatchPlanningWithoutSaving(action);
+			setShouldSavePlanning(true);
+		},
+		[planning]
+	);
+
+	useEffect(() => {
+		if (shouldSavePlanning) {
+			setShouldSavePlanning(false);
+			if (planning) {
+				dispatchMessage({ type: "save_begin" });
+				savePlanning(planning!)
+					.then(() => dispatchMessage({ type: "save_end", message: "Planning updated" }))
+					.catch(error => {
+						console.error(error);
+						dispatchMessage({ type: "save_end", message: "Unable to update planning!" });
+					});
+			}
 		}
-		dispatchPlanningWithoutSaving(action);
-		if (planning) {
-			dispatchMessage({ type: "save_begin" });
-			savePlanning(planning!)
-				.then(() => dispatchMessage({ type: "save_end", message: "Planning updated" }))
-				.catch(error => {
-					console.error(error);
-					dispatchMessage({ type: "save_end", message: "Unable to update planning!" });
-				});
-		}
-	};
+	}, [shouldSavePlanning]);
+
 	useEffect(() => {
 		loadPlanning()
 			.then(verifyPlanning)
@@ -106,6 +131,7 @@ export function PlanningContextProvider({ children }: PropsWithChildren) {
 				dispatchMessage({ type: "send_message", message: "Unable to load planning" });
 			});
 	}, []);
+
 	const context = useMemo(() => ({ planning, dispatchPlanning }), [planning]);
 	return <PlanningContext.Provider value={context} children={children} />;
 }
@@ -131,7 +157,7 @@ function verifyPlanning(planning: Planning | null): Planning {
 	return planning;
 }
 
-function isExpired(date?: number): boolean {
+export function isExpired(date?: number): boolean {
 	if (date === undefined) return false;
 	const d = new Date(date);
 	d.setHours(0, 0, 0, 0);

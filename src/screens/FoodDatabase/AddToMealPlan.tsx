@@ -14,8 +14,10 @@ import {
 } from "react-native-paper";
 
 import SelectableChips from "../../components/SelectableChips";
+import { usePlanningContext } from "../../contexts/PlanningContext";
 import { useAnimatedSlide } from "../../hooks/useAnimatedSlide";
-import { FoodItem } from "../../utils/types";
+import { days as allDays, mealIcons, meals as allMeals } from "../../utils/constants";
+import { Day, FoodItem, Meal } from "../../utils/types";
 
 export interface AddToMealPlanProps {
 	item: FoodItem;
@@ -24,16 +26,22 @@ export interface AddToMealPlanProps {
 
 export function AddToMealPlan({ item, style }: AddToMealPlanProps) {
 	const theme = useTheme();
+	const { dispatchPlanning } = usePlanningContext();
 	const [visible, setVisible] = useState(false);
 	const [confirmCancel, setConfirmCancel] = useState(false);
 
 	const [quantity, setQuantity] = useState(1);
-	const [days, setDays] = useState<string[]>([]);
+	const [days, setDays] = useState<Day[]>([]);
+	const [meals, setMeals] = useState<Meal[]>([]);
 	const [extra, setExtra] = useState(false);
 
 	const animatedSlide = useAnimatedSlide("bottom", visible);
 	const animatedSlideConfirm = useAnimatedSlide("bottom", confirmCancel);
 
+	const add = () => {
+		dispatchPlanning({ type: "add_food", food: item, quantity, days, meals, extra });
+		setVisible(false);
+	};
 	const close = () => setConfirmCancel(true);
 
 	return (
@@ -51,7 +59,7 @@ export function AddToMealPlan({ item, style }: AddToMealPlanProps) {
 					<Appbar.Header elevated>
 						<Appbar.Action icon="close" onPress={close} />
 						<Appbar.Content title="Add to meal plan" />
-						<Button mode="text" onPress={() => console.log("Add: " + item?.label)}>
+						<Button mode="text" onPress={add} disabled={days.length === 0 || meals.length === 0}>
 							Add
 						</Button>
 					</Appbar.Header>
@@ -102,15 +110,7 @@ export function AddToMealPlan({ item, style }: AddToMealPlanProps) {
 						</View>
 						<View>
 							<SelectableChips
-								options={[
-									{ label: "Monday", value: "monday" },
-									{ label: "Tuesday", value: "tuesday" },
-									{ label: "Wednesday", value: "wednesday" },
-									{ label: "Thursday", value: "thursday" },
-									{ label: "Friday", value: "friday" },
-									{ label: "Saturday", value: "saturday" },
-									{ label: "Sunday", value: "sunday" }
-								]}
+								options={allDays.map(day => ({ label: day, value: day }))}
 								selected={days}
 								multiple
 								onToggle={(day, selected) => {
@@ -126,17 +126,12 @@ export function AddToMealPlan({ item, style }: AddToMealPlanProps) {
 						</View>
 						<View>
 							<SelectableChips
-								options={[
-									{ label: "Breakfast", value: "breakfast", icon: "food-croissant" },
-									{ label: "Lunch", value: "lunch", icon: "food-outline" },
-									{ label: "Snack", value: "snack", icon: "cookie-outline" },
-									{ label: "Dinner", value: "dinner", icon: "pot-steam-outline" }
-								]}
-								selected={days}
+								options={allMeals.map(meal => ({ label: meal, value: meal, icon: mealIcons[meal] }))}
+								selected={meals}
 								multiple
-								onToggle={(day, selected) => {
-									if (selected) setDays(days.concat(day));
-									else setDays(days.filter(d => d !== day));
+								onToggle={(meal, selected) => {
+									if (selected) setMeals(meals.concat(meal));
+									else setMeals(meals.filter(m => m !== meal));
 								}}
 								style={{ paddingHorizontal: 20, gap: 10 }}
 							/>

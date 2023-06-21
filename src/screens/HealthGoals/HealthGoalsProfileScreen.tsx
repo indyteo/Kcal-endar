@@ -1,13 +1,13 @@
 import { StackScreenProps } from "@react-navigation/stack";
-import React, { useEffect, useMemo } from "react";
+import React, { useEffect } from "react";
 import { ScrollView, View } from "react-native";
 import { Chip, Text, useTheme } from "react-native-paper";
 import Icon from "react-native-paper/src/components/Icon";
 
 import { HealthGoalsStackParamList } from "./index";
 import { useProfileContext } from "../../contexts/ProfileContext";
-import { computeBMR } from "../../services/Calories";
-import { getAge } from "../../utils/functions";
+import useAge from "../../hooks/useAge";
+import useBMR from "../../hooks/useBMR";
 import { ActivityLevel, Gender, HealthGoal } from "../../utils/types";
 
 const genders: Record<Gender, string> = {
@@ -32,21 +32,8 @@ const healthGoals: Record<HealthGoal, string> = {
 const HealthGoalsProfileScreen = ({ navigation }: StackScreenProps<HealthGoalsStackParamList, "Profile">) => {
 	const theme = useTheme();
 	const { profile } = useProfileContext();
-	const age = useMemo(() => (profile === null ? 0 : getAge(new Date(profile?.birthdate))), [profile?.birthdate]);
-	const bmr = useMemo(
-		() =>
-			profile === null
-				? 0
-				: computeBMR(
-						age,
-						profile?.gender,
-						profile?.height,
-						profile?.weight,
-						profile?.activityLevel,
-						profile?.healthGoal
-				  ),
-		[profile]
-	);
+	const age = useAge();
+	const bmr = useBMR();
 
 	useEffect(() => {
 		if (profile === null) navigation.navigate("Edit");

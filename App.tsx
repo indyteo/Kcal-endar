@@ -14,6 +14,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import AppNavigator from "./src/AppNavigator";
 import Messages from "./src/components/Messages";
+import { FavoritesContextProvider } from "./src/contexts/FavoritesContext";
 import { MessagesContextProvider } from "./src/contexts/MessagesContext";
 import { PlanningContextProvider } from "./src/contexts/PlanningContext";
 import { ProfileContextProvider } from "./src/contexts/ProfileContext";
@@ -46,9 +47,11 @@ export default function App() {
 					<MessagesContextProvider>
 						<ProfileContextProvider>
 							<PlanningContextProvider>
-								<StatusBar />
-								<AppNavigator />
-								<Messages />
+								<FavoritesContextProvider>
+									<StatusBar />
+									<AppNavigator />
+									<Messages />
+								</FavoritesContextProvider>
 							</PlanningContextProvider>
 						</ProfileContextProvider>
 					</MessagesContextProvider>
