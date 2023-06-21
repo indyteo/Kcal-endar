@@ -22,21 +22,21 @@ const DATA = [
 	}
 ];
 
-const MealPlanningProfileScreen = ({ day }: { day: string }) => {
+const MealPlanningScreen = ({ day }: { day: string }) => {
 	const theme = useTheme();
 	return (
 		<View style={{ flex: 1, position: "relative" }}>
-			<View>
+			<View style={{ padding: 20, bottom: 10, gap: 5 }}>
 				<Text variant="titleLarge">Planned caloric intake</Text>
-				<Text variant="displayMedium" style={{ color: theme.colors.primary }}>
+				<Text variant="displayMedium" style={{ color: theme.colors.primary, textAlign: "center" }}>
 					XXXX kcal
 				</Text>
-				<Text variant="titleLarge" style={{ color: theme.colors.onSurfaceVariant }}>
+				<Text variant="titleLarge" style={{ color: theme.colors.onSurfaceVariant, textAlign: "center" }}>
 					Daily target: XXXX kcal
 				</Text>
 			</View>
 			<Divider />
-			<View style={{ flex: 1 }}>
+			<View style={{ flex: 1, top: 10 }}>
 				<SectionList
 					sections={DATA}
 					keyExtractor={(item, index) => item + index}
@@ -45,7 +45,9 @@ const MealPlanningProfileScreen = ({ day }: { day: string }) => {
 					)}
 					renderSectionHeader={({ section: { title } }) => (
 						<View style={{ flexDirection: "row" }}>
-							<Text style={{ flex: 1 }}>{title}</Text>
+							<Text variant="titleMedium" style={{ flex: 1, top: 10, left: 5 }}>
+								{title}
+							</Text>
 							<IconButton icon="plus" onPress={() => console.log("oui")} />
 						</View>
 					)}
@@ -70,4 +72,4 @@ const MealPlanningProfileScreen = ({ day }: { day: string }) => {
 	);
 };
 
-export default MealPlanningProfileScreen;
+export default MealPlanningScreen;

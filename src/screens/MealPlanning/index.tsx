@@ -2,7 +2,7 @@ import { createStackNavigator } from "@react-navigation/stack";
 import React from "react";
 
 import { MealPlanningHeader } from "./MealPlanningHeader";
-import MealPlanningProfileScreen from "./MealPlanningProfileScreen";
+import MealPlanningScreen from "./MealPlanningScreen";
 import { days } from "../../utils/constants";
 import { getCurrentDay } from "../../utils/functions";
 import { Day } from "../../utils/types";
@@ -15,7 +15,7 @@ export function MealPlanning() {
 		<MealPlanningStack.Navigator initialRouteName={getCurrentDay()}>
 			{days.map(day => (
 				<MealPlanningStack.Screen key={day} name={day} options={{ header: MealPlanningHeader }}>
-					{() => <MealPlanningProfileScreen day={day} />}
+					{() => <MealPlanningScreen day={day} />}
 				</MealPlanningStack.Screen>
 			))}
 		</MealPlanningStack.Navigator>
