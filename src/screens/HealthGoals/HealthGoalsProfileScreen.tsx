@@ -10,7 +10,7 @@ import { useProfileContext } from "../../contexts/ProfileContext";
 import useAge from "../../hooks/useAge";
 import useBMR from "../../hooks/useBMR";
 import { loadFoodItems } from "../../services/AppStorage";
-import { ActivityLevel, Gender, HealthGoal } from "../../utils/types";
+import { ActivityLevel, Day, Gender, HealthGoal, Meal, Planning } from "../../utils/types";
 
 const genders: Record<Gender, string> = {
 	male: "Male",
@@ -38,19 +38,18 @@ const HealthGoalsProfileScreen = ({ navigation }: StackScreenProps<HealthGoalsSt
 	const age = useAge();
 	const bmr = useBMR();
 	const [dailyCaloriesAverage, setDailyCaloriesAverage] = useState<number>();
-	const diff = dailyCaloriesAverage === undefined ? 0 : Math.floor(dailyCaloriesAverage - bmr);
+	const diff = dailyCaloriesAverage === undefined ? 0 : dailyCaloriesAverage - bmr;
 
 	useEffect(() => {
 		if (planning === null) return;
-		loadFoodItems(
-			Object.values(planning)
-				.flatMap(Object.values)
-				.flat()
-				.filter(item => !isExpired(item.date))
-				.map(item => item.id)
-		)
-			.then(Object.values)
-			.then(items => items.reduce((total, item) => total + (item?.kcal ?? 0), 0) / 7)
+		const items = Object.values<Planning[Day]>(planning)
+			.flatMap(Object.values<Planning[Day][Meal]>)
+			.flat()
+			.filter(item => !isExpired(item.date));
+		loadFoodItems(items.map(item => item.id))
+			.then(foodItems => items.map(item => (foodItems[item.id]?.kcal ?? 0) * item.quantity))
+			.then(itemsKcal => itemsKcal.reduce((total, itemKcal) => total + itemKcal, 0) / 7)
+			.then(Math.floor)
 			.then(setDailyCaloriesAverage);
 	}, [planning]);
 
@@ -98,7 +97,7 @@ const HealthGoalsProfileScreen = ({ navigation }: StackScreenProps<HealthGoalsSt
 						color: Math.abs(diff) > 150 ? theme.colors.error : theme.colors.onBackground
 					}}
 				>
-					{Math.floor(dailyCaloriesAverage)} kcal
+					{dailyCaloriesAverage} kcal
 				</Text>
 			)}
 			{Math.abs(diff) > 150 && (
